@@ -49,19 +49,27 @@
       </div>
     </header>
 
-    <!-- Operation Category Tabs -->
-    <div class="category-nav">
-      <button class="cat-tab active" id="cat-mul" onclick="switchCategory('multiplication')">
-        ✖️ Multiplicación
+    <!-- Operation Category Tabs with Arrow Controls -->
+    <div class="nav-carousel-wrapper category-carousel-wrapper">
+      <button class="nav-arrow-btn" onclick="prevCategory()" title="Categoría anterior" aria-label="Categoría anterior">
+        <i class="fa-solid fa-chevron-left"></i>
       </button>
-      <button class="cat-tab" id="cat-add" onclick="switchCategory('addition')">
-        ➕ Sumas
-      </button>
-      <button class="cat-tab" id="cat-sub" onclick="switchCategory('subtraction')">
-        ➖ Restas
-      </button>
-      <button class="cat-tab" id="cat-div" onclick="switchCategory('division')">
-        ➗ Divisiones
+      <div class="category-nav" id="category-nav">
+        <button class="cat-tab active" id="cat-mul" onclick="switchCategory('multiplication')">
+          ✖️ Multiplicación
+        </button>
+        <button class="cat-tab" id="cat-add" onclick="switchCategory('addition')">
+          ➕ Sumas
+        </button>
+        <button class="cat-tab" id="cat-sub" onclick="switchCategory('subtraction')">
+          ➖ Restas
+        </button>
+        <button class="cat-tab" id="cat-div" onclick="switchCategory('division')">
+          ➗ Divisiones
+        </button>
+      </div>
+      <button class="nav-arrow-btn" onclick="nextCategory()" title="Categoría siguiente" aria-label="Categoría siguiente">
+        <i class="fa-solid fa-chevron-right"></i>
       </button>
     </div>
 
@@ -80,10 +88,18 @@
       </div>
     </div>
 
-    <!-- Levels Carousel -->
-    <nav class="levels-nav" id="levels-container">
-      <!-- Generated via JS -->
-    </nav>
+    <!-- Levels Carousel with Arrow Controls -->
+    <div class="nav-carousel-wrapper levels-carousel-wrapper">
+      <button class="nav-arrow-btn" onclick="scrollLevelsNav(-1)" title="Niveles anteriores" aria-label="Niveles anteriores">
+        <i class="fa-solid fa-chevron-left"></i>
+      </button>
+      <nav class="levels-nav" id="levels-container">
+        <!-- Generated via JS -->
+      </nav>
+      <button class="nav-arrow-btn" onclick="scrollLevelsNav(1)" title="Niveles siguientes" aria-label="Niveles siguientes">
+        <i class="fa-solid fa-chevron-right"></i>
+      </button>
+    </div>
 
     <!-- Main Card -->
     <main class="main-card">

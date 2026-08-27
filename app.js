@@ -214,6 +214,40 @@ document.addEventListener('DOMContentLoaded', () => {
   setupProcedureCanvas();
 });
 
+const CATEGORY_KEYS = ['multiplication', 'addition', 'subtraction', 'division'];
+
+function prevCategory() {
+  const currentIndex = CATEGORY_KEYS.indexOf(currentCategory);
+  const prevIndex = (currentIndex - 1 + CATEGORY_KEYS.length) % CATEGORY_KEYS.length;
+  switchCategory(CATEGORY_KEYS[prevIndex]);
+  scrollCategoryIntoView(CATEGORY_KEYS[prevIndex]);
+  playTone(440, 'sine', 0.08);
+}
+
+function nextCategory() {
+  const currentIndex = CATEGORY_KEYS.indexOf(currentCategory);
+  const nextIndex = (currentIndex + 1) % CATEGORY_KEYS.length;
+  switchCategory(CATEGORY_KEYS[nextIndex]);
+  scrollCategoryIntoView(CATEGORY_KEYS[nextIndex]);
+  playTone(440, 'sine', 0.08);
+}
+
+function scrollCategoryIntoView(catKey) {
+  const map = { multiplication: 'mul', addition: 'add', subtraction: 'sub', division: 'div' };
+  const tab = document.getElementById(`cat-${map[catKey]}`);
+  if (tab) {
+    tab.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+  }
+}
+
+function scrollLevelsNav(direction) {
+  const container = document.getElementById('levels-container');
+  if (container) {
+    container.scrollBy({ left: direction * 180, behavior: 'smooth' });
+    playTone(520, 'triangle', 0.06);
+  }
+}
+
 function switchCategory(catKey) {
   currentCategory = catKey;
   currentLevel = 1;
