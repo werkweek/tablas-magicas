@@ -1,14 +1,16 @@
-// Centro de Matemáticas 4º Grado - Multiplicación (1 al 10 + Aleatorio), Sumas, Restas y Divisiones
-let currentCategory = 'multiplication'; // 'multiplication', 'addition', 'subtraction', 'division'
+// Centro de Matemáticas 4º Grado - Multiplicación, Sumas, Restas, Divisiones & Social Sharing
+let currentCategory = 'multiplication';
 let currentLevel = 1;
-let globalInputMode = 'draw'; // 'draw' or 'type'
+let globalInputMode = 'draw';
 let totalStars = 0;
 let userAnswers = {};
-let userProcedures = {}; // key -> procedure dataURL
-let digitDifficulty = 2; // 1, 2, or 3 digits
+let userProcedures = {};
+let digitDifficulty = 2;
 let soundEnabled = true;
 
-// Spanish Number to Words Converter (0 to 1000)
+const APP_URL = "https://werkweek.github.io/tablas-magicas/";
+
+// Spanish Number to Words Converter
 function numberToWordsES(n) {
   if (n === null || isNaN(n)) return "";
   n = Math.round(n);
@@ -210,29 +212,26 @@ function loadLevel(levelId) {
   updateLevelProgress();
 }
 
-// Generate Questions according to category, level, and difficulty settings
+// Question generator
 function getQuestionsForCurrent() {
-  const seed = `${currentCategory}-${currentLevel}`;
   const questions = [];
 
   if (currentCategory === 'multiplication') {
     if (currentLevel <= 10) {
-      // Table 1 to 10
       for (let i = 1; i <= 10; i++) {
         questions.push({ a: currentLevel, b: i, op: '×', res: currentLevel * i });
       }
     } else {
-      // Level 11: Random / Multidigit Challenge
       for (let i = 0; i < 10; i++) {
         let a, b;
         if (digitDifficulty === 1) {
           a = Math.floor(Math.random() * 9) + 2;
           b = Math.floor(Math.random() * 9) + 2;
         } else if (digitDifficulty === 2) {
-          a = Math.floor(Math.random() * 80) + 12; // 2 digits
+          a = Math.floor(Math.random() * 80) + 12;
           b = Math.floor(Math.random() * 8) + 2;
         } else {
-          a = Math.floor(Math.random() * 300) + 100; // 3 digits
+          a = Math.floor(Math.random() * 300) + 100;
           b = Math.floor(Math.random() * 8) + 2;
         }
         questions.push({ a, b, op: '×', res: a * b });
@@ -298,12 +297,10 @@ function renderExercises() {
         <div class="op-badge">${q.a} ${q.op} ${q.b}</div>
         <div class="equal-txt">=</div>
         
-        <!-- Numeric input -->
         <input type="number" class="num-input-box" id="num-${key}" 
                value="${data.num}" placeholder="?"
                oninput="onNumChange('${key}', this.value)">
                
-        <!-- Written Word / Drawing Section -->
         <div class="written-container">
           ${globalInputMode === 'type' ? `
             <input type="text" class="written-input-box" id="text-${key}"
@@ -322,7 +319,6 @@ function renderExercises() {
           `}
         </div>
 
-        <!-- Procedure / Casita Whiteboard Button (Especially for Division / Multidigit) -->
         <button class="procedure-btn ${hasProcedure ? 'has-work' : ''}" 
                 onclick="openProcedureModal('${key}', '${q.a} ${q.op} ${q.b}')"
                 title="Abrir Pizarra para hacer el procedimiento con casita o pasos">
@@ -367,6 +363,8 @@ function updateLevelProgress() {
 // ----------------------------------------------------
 // DYNAMIC SCORE & EVALUATION
 // ----------------------------------------------------
+let lastScoreStats = { correct: 0, stars: 0, levelName: "", student: "" };
+
 function checkCurrentLevel() {
   const questions = getQuestionsForCurrent();
   let correctCount = 0;
@@ -404,6 +402,18 @@ function checkCurrentLevel() {
 
   totalStars += earnedStars;
   document.getElementById('total-stars').innerText = totalStars;
+
+  const catData = CATEGORY_DATA[currentCategory];
+  const levelInfo = catData.levels.find(l => l.id === currentLevel) || catData.levels[0];
+  const student = document.getElementById('student-name').value || "Campeón(a)";
+
+  lastScoreStats = {
+    correct: correctCount,
+    stars: earnedStars,
+    levelName: levelInfo.name,
+    categoryName: catData.name,
+    student: student
+  };
 
   openScoreModal(correctCount, earnedStars);
 }
@@ -537,13 +547,21 @@ function showFinalMasterCelebration() {
   document.getElementById('victory-title').innerText = `¡GRAN MAESTRO DE ${catName.toUpperCase()}! 🎓`;
   document.getElementById('animated-score-val').innerText = totalStars;
   document.getElementById('animated-pct').innerText = '⭐ Estrellas';
-  document.getElementById('victory-msg').innerText = `¡Felicidades, ${student}! Has completado con éxito todos los niveles de ${catName}. ¡Eres un orgullo de 4º Grado!`;
+  document.getElementById('victory-msg').innerText = `¡Felicidades, ${student}! Has completado con éxito todos los niveles de ${catName}. ¡Eres un genio de 4º Grado!`;
   
   for (let i = 1; i <= 3; i++) {
     const slot = document.getElementById(`star-${i}`);
     slot.className = 'star-slot earned';
     slot.innerText = '⭐';
   }
+
+  lastScoreStats = {
+    correct: 10,
+    stars: 3,
+    levelName: `Todos los Niveles de ${catName}`,
+    categoryName: catName,
+    student: student
+  };
 
   const nextBtn = document.getElementById('next-level-btn');
   nextBtn.innerText = '🔄 Jugar de Nuevo desde Nivel 1';
@@ -569,6 +587,170 @@ function resetCurrentLevel() {
 }
 
 // ----------------------------------------------------
+// SOCIAL SHARING & DUOLINGO-STYLE CARD GENERATOR
+// ----------------------------------------------------
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  if (!t) return;
+  t.innerText = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+function getShareText() {
+  const starsTxt = "⭐".repeat(Math.max(lastScoreStats.stars, 1));
+  return `¡Hola! 🚀 ${lastScoreStats.student} completó el nivel "${lastScoreStats.levelName}" en Tablas Mágicas (4º Grado) y ganó ${lastScoreStats.stars} estrellas ${starsTxt}! 🏆 Practica gratis aquí: ${APP_URL}`;
+}
+
+function shareOnWhatsApp() {
+  const text = encodeURIComponent(getShareText());
+  window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
+}
+
+function shareOnFacebook() {
+  const url = encodeURIComponent(APP_URL);
+  window.open(`https://www.facebook.com/sharer/sharer.php?u=${url}`, '_blank');
+}
+
+function copyShareLink() {
+  navigator.clipboard.writeText(APP_URL).then(() => {
+    showToast("¡Enlace copiado al portapapeles! 📋");
+  }).catch(() => {
+    prompt("Copia este enlace:", APP_URL);
+  });
+}
+
+// Generate Duolingo-style High-Resolution Graphic Card (1080x1080)
+function generateAndDownloadCard() {
+  const cardCanvas = document.getElementById('card-generator-canvas');
+  if (!cardCanvas) return;
+  const c = cardCanvas.getContext('2d');
+  const w = 1080;
+  const h = 1080;
+
+  // 1. Vibrant Gradient Background
+  const grad = c.createLinearGradient(0, 0, w, h);
+  grad.addColorStop(0, '#312e81');
+  grad.addColorStop(0.5, '#4f46e5');
+  grad.addColorStop(1, '#7c3aed');
+  c.fillStyle = grad;
+  c.fillRect(0, 0, w, h);
+
+  // Decorative circles
+  c.fillStyle = 'rgba(255, 255, 255, 0.05)';
+  c.beginPath(); c.arc(100, 100, 220, 0, Math.PI * 2); c.fill();
+  c.beginPath(); c.arc(980, 900, 280, 0, Math.PI * 2); c.fill();
+  c.beginPath(); c.arc(950, 150, 140, 0, Math.PI * 2); c.fill();
+
+  // 2. White Card Container
+  c.shadowColor = 'rgba(0, 0, 0, 0.4)';
+  c.shadowBlur = 50;
+  c.shadowOffsetY = 25;
+  c.fillStyle = '#ffffff';
+  roundRect(c, 70, 70, w - 140, h - 140, 50, true, false);
+  c.shadowColor = 'transparent';
+
+  // 3. Top Banner Badge
+  c.fillStyle = '#fef08a';
+  roundRect(c, 320, 120, 440, 65, 30, true, false);
+  c.fillStyle = '#854d0e';
+  c.font = 'bold 30px Nunito, sans-serif';
+  c.textAlign = 'center';
+  c.fillText('🚀 TABLAS MÁGICAS • 4º GRADO', w / 2, 163);
+
+  // 4. Big Trophy / Achievement Emoji
+  c.font = '140px sans-serif';
+  c.fillText(lastScoreStats.stars === 3 ? '🏆' : (lastScoreStats.stars >= 2 ? '🎉' : '⭐'), w / 2, 330);
+
+  // 5. Main Title
+  c.fillStyle = '#1e1b4b';
+  c.font = '900 58px Fredoka, Nunito, sans-serif';
+  c.fillText('¡LOGRO DESBLOQUEADO!', w / 2, 420);
+
+  // 6. Student Name
+  c.fillStyle = '#4f46e5';
+  c.font = '800 50px Nunito, sans-serif';
+  c.fillText(`¡Felicidades, ${lastScoreStats.student}!`, w / 2, 490);
+
+  // 7. Level & Score Box
+  c.fillStyle = '#f8fafc';
+  c.strokeStyle = '#e2e8f0';
+  c.lineWidth = 4;
+  roundRect(c, 140, 530, w - 280, 240, 30, true, true);
+
+  c.fillStyle = '#64748b';
+  c.font = 'bold 30px Nunito, sans-serif';
+  c.fillText(lastScoreStats.levelName.toUpperCase(), w / 2, 590);
+
+  c.fillStyle = '#10b981';
+  c.font = '900 64px Fredoka, sans-serif';
+  c.fillText(`${lastScoreStats.correct} / 10 Aciertos (${lastScoreStats.correct * 10}%)`, w / 2, 670);
+
+  // Stars
+  const starsCount = Math.max(lastScoreStats.stars, 1);
+  let starsStr = '';
+  for (let i = 0; i < 3; i++) {
+    starsStr += i < starsCount ? '⭐ ' : '☆ ';
+  }
+  c.font = '65px sans-serif';
+  c.fillText(starsStr.trim(), w / 2, 745);
+
+  // 8. Footer Call to Action & Link
+  c.fillStyle = '#475569';
+  c.font = 'bold 30px Nunito, sans-serif';
+  c.fillText('Practica matemáticas y supera tus retos gratis en:', w / 2, 860);
+
+  c.fillStyle = '#4338ca';
+  c.font = '900 38px Nunito, sans-serif';
+  c.fillText('werkweek.github.io/tablas-magicas/', w / 2, 920);
+
+  // 9. Download the Image
+  cardCanvas.toBlob(blob => {
+    if (!blob) return;
+    const file = new File([blob], `Logro_Tablas_Magicas_${lastScoreStats.student}.png`, { type: 'image/png' });
+
+    // If mobile supports Web Share with files
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      navigator.share({
+        files: [file],
+        title: 'Mi Logro en Tablas Mágicas 🏆',
+        text: getShareText()
+      }).catch(() => downloadBlob(blob));
+    } else {
+      downloadBlob(blob);
+    }
+  }, 'image/png');
+}
+
+function downloadBlob(blob) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `Logro_Tablas_Magicas_${lastScoreStats.student.replace(/\s+/g, '_')}.png`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast("¡Tarjeta de logro descargada! 🖼️");
+}
+
+function roundRect(ctx, x, y, width, height, radius, fill, stroke) {
+  ctx.beginPath();
+  ctx.moveTo(x + radius, y);
+  ctx.lineTo(x + width - radius, y);
+  ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+  ctx.lineTo(x + width, y + height - radius);
+  ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+  ctx.lineTo(x + radius, y + height);
+  ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+  ctx.lineTo(x, y + radius);
+  ctx.quadraticCurveTo(x, y, x + radius, y);
+  ctx.closePath();
+  if (fill) ctx.fill();
+  if (stroke) ctx.stroke();
+}
+
+// ----------------------------------------------------
 // SETTINGS MODAL
 // ----------------------------------------------------
 function openSettingsModal() {
@@ -589,7 +771,7 @@ function toggleSound(enabled) {
 }
 
 // ----------------------------------------------------
-// 1. HANDWRITING CANVAS LOGIC (Word Drawing)
+// 1. HANDWRITING CANVAS LOGIC
 // ----------------------------------------------------
 let activeDrawingKey = null;
 let hwCanvas, hwCtx;
@@ -690,7 +872,7 @@ function saveDrawingToExercise() {
 }
 
 // ----------------------------------------------------
-// 2. PROCEDURE CANVAS LOGIC (Division Casita Whiteboard)
+// 2. PROCEDURE CANVAS LOGIC
 // ----------------------------------------------------
 let activeProcedureKey = null;
 let procCanvas, procCtx;

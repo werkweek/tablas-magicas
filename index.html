@@ -4,10 +4,17 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Centro de Matemáticas 4º Grado - Tablas y Operaciones</title>
+  <!-- OpenGraph / Social Meta -->
+  <meta property="og:title" content="Tablas Mágicas - Centro de Matemáticas 4º Grado">
+  <meta property="og:description" content="Aprende y domina las tablas de multiplicar del 1 al 10, sumas, restas y divisiones con pizarra interactiva y gamificación.">
+  <meta property="og:url" content="https://werkweek.github.io/tablas-magicas/">
+  <meta property="og:type" content="website">
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <!-- FontAwesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <!-- Canvas Confetti -->
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
   <link rel="stylesheet" href="style.css">
@@ -27,7 +34,7 @@
       
       <div class="header-stats">
         <button class="settings-btn-icon" onclick="openSettingsModal()" title="Configuración">
-          ⚙️ Opciones
+          <i class="fa-solid fa-gear"></i> Opciones
         </button>
         <div class="stat-pill star-pill">
           <span class="stat-icon">⭐</span>
@@ -39,7 +46,7 @@
       </div>
     </header>
 
-    <!-- Operation Category Tabs (Multiplicación, Sumas, Restas, Divisiones) -->
+    <!-- Operation Category Tabs -->
     <div class="category-nav">
       <button class="cat-tab active" id="cat-mul" onclick="switchCategory('multiplication')">
         ✖️ Multiplicación
@@ -70,7 +77,7 @@
       </div>
     </div>
 
-    <!-- Levels Selector (Tablas 1 al 10 + Nivel Aleatorio / Niveles por Categoría) -->
+    <!-- Levels Carousel -->
     <nav class="levels-nav" id="levels-container">
       <!-- Generated via JS -->
     </nav>
@@ -98,17 +105,17 @@
       <!-- Action Buttons: Left = Reset, Right = Check -->
       <div class="level-actions-bar">
         <button class="btn-secondary-action reset-btn" onclick="resetCurrentLevel()">
-          🔄 Reiniciar Nivel
+          <i class="fa-solid fa-rotate-left"></i> Reiniciar Nivel
         </button>
         <button class="btn-primary-action check-btn" onclick="checkCurrentLevel()">
-          ✨ ¡Comprobar Mis Respuestas!
+          <i class="fa-solid fa-wand-magic-sparkles"></i> ¡Comprobar Mis Respuestas!
         </button>
       </div>
     </main>
 
     <!-- Footer -->
     <footer class="app-footer">
-      <p>💡 <em>Tip de 4º Grado:</em> En las divisiones puedes abrir la <strong>Pizarra de Casita 📐</strong> para hacer tu procedimiento a mano alzada.</p>
+      <p>💡 <em>Tip de 4º Grado:</em> Al terminar cada nivel puedes compartir tu tarjeta de logro en <strong>WhatsApp, Facebook</strong> o descargar tu imagen estilo Duolingo.</p>
     </footer>
   </div>
 
@@ -200,7 +207,7 @@
   <div class="modal-overlay" id="settings-modal">
     <div class="modal-card settings-card">
       <div class="modal-header">
-        <h3>⚙️ Configuración del Reto Aleatorio</h3>
+        <h3>⚙️ Configuración del Reto</h3>
         <button class="close-modal-btn" onclick="closeSettingsModal()">✕</button>
       </div>
       <div class="modal-body">
@@ -232,7 +239,7 @@
         </div>
 
         <div class="setting-group">
-          <label class="setting-title">🎵 Efectos y Animaciones:</label>
+          <label class="setting-title">🎵 Efectos y Sonido:</label>
           <div class="toggle-row">
             <span>Efectos de Sonido y Fanfarria</span>
             <input type="checkbox" id="sound-toggle" checked onchange="toggleSound(this.checked)">
@@ -245,12 +252,13 @@
     </div>
   </div>
 
-  <!-- DYNAMIC ANIMATED SCORE & VICTORY MODAL -->
+  <!-- DYNAMIC ANIMATED SCORE, VICTORY & SOCIAL SHARING MODAL -->
   <div class="modal-overlay" id="victory-modal">
     <div class="modal-card victory-card">
       <div class="trophy-emoji" id="score-emoji">🏆</div>
       <h2 id="victory-title">Evaluando Respuestas...</h2>
       
+      <!-- Rolling Counter -->
       <div class="score-counter-box">
         <span class="counter-label">Puntaje Obtenido:</span>
         <div class="counter-number-wrap">
@@ -260,6 +268,7 @@
         <div class="score-pct" id="animated-pct">0%</div>
       </div>
 
+      <!-- Animated Stars Display -->
       <div class="stars-pod" id="stars-display-pod">
         <span class="star-slot" id="star-1">☆</span>
         <span class="star-slot" id="star-2">☆</span>
@@ -268,12 +277,42 @@
 
       <p id="victory-msg" class="score-feedback-msg">¡Calculando tu resultado mágico!</p>
       
+      <!-- SOCIAL SHARE & DUOLINGO-STYLE ACHIEVEMENT CARD POD -->
+      <div class="share-section-box">
+        <span class="share-title"><i class="fa-solid fa-share-nodes"></i> ¡Presume tu Logro!</span>
+        <div class="share-buttons-row">
+          <button class="btn-social btn-whatsapp" onclick="shareOnWhatsApp()" title="Compartir en WhatsApp">
+            <i class="fa-brands fa-whatsapp"></i> WhatsApp
+          </button>
+          <button class="btn-social btn-facebook" onclick="shareOnFacebook()" title="Compartir en Facebook">
+            <i class="fa-brands fa-facebook"></i> Facebook
+          </button>
+          <button class="btn-social btn-card-img" onclick="generateAndDownloadCard()" title="Descargar Tarjeta estilo Duolingo">
+            <i class="fa-solid fa-image"></i> Tarjeta PNG
+          </button>
+          <button class="btn-social btn-copy-link" onclick="copyShareLink()" title="Copiar Enlace">
+            <i class="fa-solid fa-link"></i> Copiar
+          </button>
+        </div>
+      </div>
+
+      <!-- Actions (Next level / Review errors) -->
       <div class="victory-actions" id="victory-actions-container">
-        <button class="btn-secondary-action" onclick="closeVictoryModal()">👀 Revisar Errores</button>
-        <button class="btn-primary-action" id="next-level-btn" onclick="nextLevelFromVictory()">¡Siguiente Nivel! 🚀</button>
+        <button class="btn-secondary-action" onclick="closeVictoryModal()">
+          <i class="fa-solid fa-magnifying-glass"></i> Revisar Errores
+        </button>
+        <button class="btn-primary-action" id="next-level-btn" onclick="nextLevelFromVictory()">
+          ¡Siguiente Nivel! 🚀
+        </button>
       </div>
     </div>
   </div>
+
+  <!-- Toast Notification -->
+  <div id="toast" class="toast"></div>
+
+  <!-- Hidden Canvas for Duolingo-style Card Generation -->
+  <canvas id="card-generator-canvas" width="1080" height="1080" style="display:none;"></canvas>
 
   <script src="app.js"></script>
 </body>
