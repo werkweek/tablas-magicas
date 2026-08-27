@@ -6,7 +6,7 @@
   <title>Centro de Matemáticas 4º Grado - Tablas y Operaciones</title>
   <!-- OpenGraph / Social Meta -->
   <meta property="og:title" content="Tablas Mágicas - Centro de Matemáticas 4º Grado">
-  <meta property="og:description" content="Aprende y domina las tablas de multiplicar del 1 al 10, sumas, restas y divisiones con pizarra interactiva y dashboard de avance.">
+  <meta property="og:description" content="Aprende y domina las tablas de multiplicar del 1 al 10, sumas, restas y divisiones con pizarra interactiva. Creado por Gibran Samuel Villa Franco.">
   <meta property="og:url" content="https://werkweek.github.io/tablas-magicas/">
   <meta property="og:type" content="website">
   <!-- Google Fonts -->
@@ -36,7 +36,7 @@
         <button class="dashboard-btn-icon" onclick="openDashboardModal()" title="Ver Dashboard de Progreso">
           <i class="fa-solid fa-chart-pie"></i> Mi Progreso
         </button>
-        <button class="settings-btn-icon" onclick="openSettingsModal()" title="Configuración">
+        <button class="settings-btn-icon" onclick="openSettingsModal()" title="Configuración y Acerca de">
           <i class="fa-solid fa-gear"></i> Opciones
         </button>
         <div class="stat-pill star-pill">
@@ -116,9 +116,16 @@
       </div>
     </main>
 
-    <!-- Footer -->
+    <!-- Footer with Developer Link & Credits -->
     <footer class="app-footer">
-      <p>💡 <em>Tip de 4º Grado:</em> Tus respuestas, trazos y estrellas se guardan automáticamente en tu dispositivo. Consulta tu avance en <strong>Mi Progreso 📊</strong>.</p>
+      <div class="footer-credits">
+        <span>⚡ Creado y construido con IA por <strong>Gibran Samuel Villa Franco</strong></span>
+        <span class="footer-sep">•</span>
+        <a href="https://werkweek.github.io/curriculumgibranvilla/" target="_blank" class="footer-link">
+          <i class="fa-solid fa-briefcase"></i> Ver mi Portafolio / Currículum
+        </a>
+      </div>
+      <p class="footer-tip">💡 <em>Tip de 4º Grado:</em> Consulta tu avance en <strong>Mi Progreso 📊</strong> o ajusta los dígitos en <strong>Opciones ⚙️</strong>.</p>
     </footer>
   </div>
 
@@ -182,7 +189,7 @@
 
         <!-- Badges & Achievements -->
         <div class="dash-achievements-box">
-          <h4>🏅 Medallas y Logros de 4º Grado:</h4>
+          <h4><i class="fa-solid fa-award"></i> Medallas y Logros de 4º Grado:</h4>
           <div class="achievements-grid" id="dash-achievements-list">
             <!-- Rendered via JS -->
           </div>
@@ -196,6 +203,87 @@
         <button class="btn-primary-action" onclick="closeDashboardModal()">
           ¡Seguir Practicando! 🚀
         </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: SETTINGS & ABOUT SECTION (ACERCA DE) -->
+  <div class="modal-overlay" id="settings-modal">
+    <div class="modal-card settings-card">
+      <div class="modal-header">
+        <div class="modal-title-wrap">
+          <span class="modal-badge-op"><i class="fa-solid fa-gear"></i></span>
+          <h3>Opciones & Acerca de</h3>
+        </div>
+        <button class="close-modal-btn" onclick="closeSettingsModal()">✕</button>
+      </div>
+      
+      <div class="modal-body">
+        <!-- Settings Group -->
+        <div class="setting-group">
+          <label class="setting-title">🔢 Dificultad de Dígitos en Nivel Aleatorio:</label>
+          <div class="setting-options">
+            <label class="radio-card">
+              <input type="radio" name="digit-difficulty" value="1" onchange="setDigitDifficulty(1)">
+              <div class="radio-content">
+                <strong>1 Dígito</strong>
+                <span>(Ej: 7 × 8, 9 + 6)</span>
+              </div>
+            </label>
+            <label class="radio-card">
+              <input type="radio" name="digit-difficulty" value="2" checked onchange="setDigitDifficulty(2)">
+              <div class="radio-content">
+                <strong>Hasta 2 Dígitos</strong>
+                <span>(Ej: 24 × 6, 85 − 37)</span>
+              </div>
+            </label>
+            <label class="radio-card">
+              <input type="radio" name="digit-difficulty" value="3" onchange="setDigitDifficulty(3)">
+              <div class="radio-content">
+                <strong>Hasta 3 Dígitos</strong>
+                <span>(Ej: 145 × 7, 650 ÷ 5)</span>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <div class="setting-group">
+          <label class="setting-title">🎵 Efectos y Sonido:</label>
+          <div class="toggle-row">
+            <span>Efectos de Sonido y Fanfarria</span>
+            <input type="checkbox" id="sound-toggle" checked onchange="toggleSound(this.checked)">
+          </div>
+        </div>
+
+        <!-- ABOUT SECTION / ACERCA DE -->
+        <div class="about-card-section">
+          <div class="about-card-header">
+            <span class="about-icon">👨‍💻</span>
+            <div>
+              <h4>Acerca de esta Aplicación</h4>
+              <span class="about-subtitle">Construida con Inteligencia Artificial (Vibe Coding)</span>
+            </div>
+          </div>
+          
+          <div class="about-card-body">
+            <p>
+              <strong>Matemáticas Mágicas (4º Grado)</strong> es una plataforma educativa interactiva diseñada y programada por el <strong>Ing. Gibran Samuel Villa Franco</strong> para revolucionar el aprendizaje de tablas de multiplicar, sumas, restas y divisiones mediante gamificación y herramientas de dibujo libre.
+            </p>
+            
+            <div class="about-links-grid">
+              <a href="https://werkweek.github.io/curriculumgibranvilla/" target="_blank" class="btn-portfolio-link">
+                <i class="fa-solid fa-briefcase"></i> Visitar mi Currículum / Portafolio
+              </a>
+              <a href="https://youtube.com/@deltapromptlabs" target="_blank" class="btn-youtube-link">
+                <i class="fa-brands fa-youtube"></i> Canal @deltapromptlabs
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn-primary-action" onclick="closeSettingsModal()">Guardar y Cerrar</button>
       </div>
     </div>
   </div>
@@ -280,55 +368,6 @@
         <button class="btn-save-drawing" onclick="saveProcedureToExercise()">
           💾 Guardar Procedimiento
         </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- SETTINGS MODAL -->
-  <div class="modal-overlay" id="settings-modal">
-    <div class="modal-card settings-card">
-      <div class="modal-header">
-        <h3>⚙️ Configuración del Reto</h3>
-        <button class="close-modal-btn" onclick="closeSettingsModal()">✕</button>
-      </div>
-      <div class="modal-body">
-        <div class="setting-group">
-          <label class="setting-title">🔢 Dificultad de Dígitos en Nivel Aleatorio:</label>
-          <div class="setting-options">
-            <label class="radio-card">
-              <input type="radio" name="digit-difficulty" value="1" onchange="setDigitDifficulty(1)">
-              <div class="radio-content">
-                <strong>1 Dígito</strong>
-                <span>(Ej: 7 × 8, 9 + 6)</span>
-              </div>
-            </label>
-            <label class="radio-card">
-              <input type="radio" name="digit-difficulty" value="2" checked onchange="setDigitDifficulty(2)">
-              <div class="radio-content">
-                <strong>Hasta 2 Dígitos</strong>
-                <span>(Ej: 24 × 6, 85 − 37)</span>
-              </div>
-            </label>
-            <label class="radio-card">
-              <input type="radio" name="digit-difficulty" value="3" onchange="setDigitDifficulty(3)">
-              <div class="radio-content">
-                <strong>Hasta 3 Dígitos</strong>
-                <span>(Ej: 145 × 7, 650 ÷ 5)</span>
-              </div>
-            </label>
-          </div>
-        </div>
-
-        <div class="setting-group">
-          <label class="setting-title">🎵 Efectos y Sonido:</label>
-          <div class="toggle-row">
-            <span>Efectos de Sonido y Fanfarria</span>
-            <input type="checkbox" id="sound-toggle" checked onchange="toggleSound(this.checked)">
-          </div>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button class="btn-primary-action" onclick="closeSettingsModal()">Listo</button>
       </div>
     </div>
   </div>
