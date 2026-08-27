@@ -974,7 +974,7 @@ function toggleSound(enabled) {
 }
 
 // ----------------------------------------------------
-// 1. HANDWRITING CANVAS LOGIC
+// 1. HANDWRITING CANVAS LOGIC (MOBILE & TOUCH OPTIMIZED)
 // ----------------------------------------------------
 let activeDrawingKey = null;
 let hwCanvas, hwCtx;
@@ -988,6 +988,8 @@ function setupHandwritingCanvas() {
   hwCtx = hwCanvas.getContext('2d');
 
   hwCanvas.addEventListener('pointerdown', e => {
+    e.preventDefault();
+    hwCanvas.setPointerCapture(e.pointerId);
     isHwDrawing = true;
     hwStrokeHistory.push(hwCanvas.toDataURL());
     if (hwStrokeHistory.length > 15) hwStrokeHistory.shift();
@@ -995,19 +997,26 @@ function setupHandwritingCanvas() {
     hwCtx.beginPath();
     hwCtx.moveTo(x, y);
     hwCtx.strokeStyle = hwDrawColor;
-    hwCtx.lineWidth = 4.5;
+    hwCtx.lineWidth = 4;
     hwCtx.lineCap = 'round';
     hwCtx.lineJoin = 'round';
   });
 
   hwCanvas.addEventListener('pointermove', e => {
     if (!isHwDrawing) return;
+    e.preventDefault();
     const { x, y } = getCanvasCoords(hwCanvas, e);
     hwCtx.lineTo(x, y);
     hwCtx.stroke();
   });
 
-  const stopHw = () => { if (isHwDrawing) { hwCtx.closePath(); isHwDrawing = false; } };
+  const stopHw = e => {
+    if (isHwDrawing) {
+      hwCtx.closePath();
+      isHwDrawing = false;
+      try { hwCanvas.releasePointerCapture(e.pointerId); } catch(err){}
+    }
+  };
   hwCanvas.addEventListener('pointerup', stopHw);
   hwCanvas.addEventListener('pointercancel', stopHw);
 }
@@ -1076,7 +1085,7 @@ function saveDrawingToExercise() {
 }
 
 // ----------------------------------------------------
-// 2. PROCEDURE CANVAS LOGIC
+// 2. PROCEDURE CANVAS LOGIC (CASITA & FORMAL DIVISION)
 // ----------------------------------------------------
 let activeProcedureKey = null;
 let procCanvas, procCtx;
@@ -1090,6 +1099,8 @@ function setupProcedureCanvas() {
   procCtx = procCanvas.getContext('2d');
 
   procCanvas.addEventListener('pointerdown', e => {
+    e.preventDefault();
+    procCanvas.setPointerCapture(e.pointerId);
     isProcDrawing = true;
     procStrokeHistory.push(procCanvas.toDataURL());
     if (procStrokeHistory.length > 20) procStrokeHistory.shift();
@@ -1104,12 +1115,19 @@ function setupProcedureCanvas() {
 
   procCanvas.addEventListener('pointermove', e => {
     if (!isProcDrawing) return;
+    e.preventDefault();
     const { x, y } = getCanvasCoords(procCanvas, e);
     procCtx.lineTo(x, y);
     procCtx.stroke();
   });
 
-  const stopProc = () => { if (isProcDrawing) { procCtx.closePath(); isProcDrawing = false; } };
+  const stopProc = e => {
+    if (isProcDrawing) {
+      procCtx.closePath();
+      isProcDrawing = false;
+      try { procCanvas.releasePointerCapture(e.pointerId); } catch(err){}
+    }
+  };
   procCanvas.addEventListener('pointerup', stopProc);
   procCanvas.addEventListener('pointercancel', stopProc);
 }
