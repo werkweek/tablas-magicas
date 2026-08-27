@@ -6,7 +6,7 @@
   <title>Centro de Matemáticas 4º Grado - Tablas y Operaciones</title>
   <!-- OpenGraph / Social Meta -->
   <meta property="og:title" content="Tablas Mágicas - Centro de Matemáticas 4º Grado">
-  <meta property="og:description" content="Aprende y domina las tablas de multiplicar del 1 al 10, sumas, restas y divisiones con pizarra interactiva y gamificación.">
+  <meta property="og:description" content="Aprende y domina las tablas de multiplicar del 1 al 10, sumas, restas y divisiones con pizarra interactiva y dashboard de avance.">
   <meta property="og:url" content="https://werkweek.github.io/tablas-magicas/">
   <meta property="og:type" content="website">
   <!-- Google Fonts -->
@@ -33,6 +33,9 @@
       </div>
       
       <div class="header-stats">
+        <button class="dashboard-btn-icon" onclick="openDashboardModal()" title="Ver Dashboard de Progreso">
+          <i class="fa-solid fa-chart-pie"></i> Mi Progreso
+        </button>
         <button class="settings-btn-icon" onclick="openSettingsModal()" title="Configuración">
           <i class="fa-solid fa-gear"></i> Opciones
         </button>
@@ -66,7 +69,7 @@
     <div class="student-strip">
       <div class="student-input-wrap">
         <span class="input-icon">👤</span>
-        <input type="text" id="student-name" placeholder="Escribe tu nombre aquí..." value="Campeón(a)">
+        <input type="text" id="student-name" placeholder="Escribe tu nombre aquí..." value="Campeón(a)" onchange="onStudentNameChange(this.value)">
       </div>
       <div class="mode-toggle-wrap">
         <span class="toggle-label">Modo escritura:</span>
@@ -115,8 +118,86 @@
 
     <!-- Footer -->
     <footer class="app-footer">
-      <p>💡 <em>Tip de 4º Grado:</em> Al terminar cada nivel puedes compartir tu tarjeta de logro en <strong>WhatsApp, Facebook</strong> o descargar tu imagen estilo Duolingo.</p>
+      <p>💡 <em>Tip de 4º Grado:</em> Tus respuestas, trazos y estrellas se guardan automáticamente en tu dispositivo. Consulta tu avance en <strong>Mi Progreso 📊</strong>.</p>
     </footer>
+  </div>
+
+  <!-- MODAL: DASHBOARD DE AVANCES Y PROGRESO GENERAL -->
+  <div class="modal-overlay" id="dashboard-modal">
+    <div class="modal-card dashboard-card">
+      <div class="modal-header">
+        <div class="modal-title-wrap">
+          <span class="modal-badge-op"><i class="fa-solid fa-chart-line"></i> Dashboard</span>
+          <h3 id="dash-student-title">Progreso de Campeón(a)</h3>
+        </div>
+        <button class="close-modal-btn" onclick="closeDashboardModal()">✕</button>
+      </div>
+
+      <div class="modal-body dashboard-body">
+        <!-- Global Stats Row -->
+        <div class="dash-stats-row">
+          <div class="dash-stat-box">
+            <span class="dash-stat-icon">⭐</span>
+            <div class="dash-stat-info">
+              <strong id="dash-total-stars">0</strong>
+              <span>Estrellas Ganadas</span>
+            </div>
+          </div>
+          <div class="dash-stat-box">
+            <span class="dash-stat-icon">🏆</span>
+            <div class="dash-stat-info">
+              <strong id="dash-levels-completed">0 / 23</strong>
+              <span>Niveles Dominados</span>
+            </div>
+          </div>
+          <div class="dash-stat-box">
+            <span class="dash-stat-icon">🎯</span>
+            <div class="dash-stat-info">
+              <strong id="dash-overall-mastery">0%</strong>
+              <span>Dominio Total</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Discipline Selector inside Dashboard -->
+        <div class="dash-category-tabs">
+          <button class="dash-tab active" id="dash-tab-mul" onclick="renderDashboardTab('multiplication')">
+            ✖️ Multiplicación
+          </button>
+          <button class="dash-tab" id="dash-tab-add" onclick="renderDashboardTab('addition')">
+            ➕ Sumas
+          </button>
+          <button class="dash-tab" id="dash-tab-sub" onclick="renderDashboardTab('subtraction')">
+            ➖ Restas
+          </button>
+          <button class="dash-tab" id="dash-tab-div" onclick="renderDashboardTab('division')">
+            ➗ Divisiones
+          </button>
+        </div>
+
+        <!-- Discipline Detailed Grid -->
+        <div class="dash-discipline-container" id="dash-discipline-content">
+          <!-- Rendered via JS -->
+        </div>
+
+        <!-- Badges & Achievements -->
+        <div class="dash-achievements-box">
+          <h4>🏅 Medallas y Logros de 4º Grado:</h4>
+          <div class="achievements-grid" id="dash-achievements-list">
+            <!-- Rendered via JS -->
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer dash-footer">
+        <button class="btn-danger-outline" onclick="confirmResetAllProgress()">
+          <i class="fa-solid fa-trash"></i> Reiniciar Todo el Progreso
+        </button>
+        <button class="btn-primary-action" onclick="closeDashboardModal()">
+          ¡Seguir Practicando! 🚀
+        </button>
+      </div>
+    </div>
   </div>
 
   <!-- MODAL: DRAWING CANVAS PAD (HANDWRITING WORDS) -->
@@ -277,7 +358,7 @@
 
       <p id="victory-msg" class="score-feedback-msg">¡Calculando tu resultado mágico!</p>
       
-      <!-- SOCIAL SHARE & DUOLINGO-STYLE ACHIEVEMENT CARD POD -->
+      <!-- Social Sharing Box -->
       <div class="share-section-box">
         <span class="share-title"><i class="fa-solid fa-share-nodes"></i> ¡Presume tu Logro!</span>
         <div class="share-buttons-row">
@@ -296,7 +377,7 @@
         </div>
       </div>
 
-      <!-- Actions (Next level / Review errors) -->
+      <!-- Actions -->
       <div class="victory-actions" id="victory-actions-container">
         <button class="btn-secondary-action" onclick="closeVictoryModal()">
           <i class="fa-solid fa-magnifying-glass"></i> Revisar Errores
@@ -311,7 +392,7 @@
   <!-- Toast Notification -->
   <div id="toast" class="toast"></div>
 
-  <!-- Hidden Canvas for Duolingo-style Card Generation -->
+  <!-- Hidden Canvas for Card Generation -->
   <canvas id="card-generator-canvas" width="1080" height="1080" style="display:none;"></canvas>
 
   <script src="app.js"></script>

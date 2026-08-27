@@ -1,16 +1,19 @@
-// Centro de Matemáticas 4º Grado - Multiplicación, Sumas, Restas, Divisiones & Social Sharing
+// Centro de Matemáticas 4º Grado - Persistencia LocalStorage, Dashboard de Avances & Social Sharing
 let currentCategory = 'multiplication';
 let currentLevel = 1;
 let globalInputMode = 'draw';
 let totalStars = 0;
+let studentName = "Campeón(a)";
 let userAnswers = {};
 let userProcedures = {};
+let levelProgressData = {}; // key: `${cat}-${lvl}` -> { bestScore: 0, stars: 0, completed: bool, attempts: 0 }
 let digitDifficulty = 2;
 let soundEnabled = true;
 
 const APP_URL = "https://werkweek.github.io/tablas-magicas/";
+const STORAGE_KEY = "tablas_magicas_progress_v1";
 
-// Spanish Number to Words Converter
+// Number to Words Converter
 function numberToWordsES(n) {
   if (n === null || isNaN(n)) return "";
   n = Math.round(n);
@@ -49,7 +52,7 @@ function normalizeText(text) {
     .replace(/\s+/g, " ");
 }
 
-// Category & Levels Definition
+// Categories and Levels Definitions
 const CATEGORY_DATA = {
   multiplication: {
     name: "Multiplicación",
@@ -99,6 +102,54 @@ const CATEGORY_DATA = {
     ]
   }
 };
+
+// ----------------------------------------------------
+// LOCALSTORAGE PERSISTENCE ENGINE
+// ----------------------------------------------------
+function saveStateToLocalStorage() {
+  try {
+    const payload = {
+      studentName,
+      totalStars,
+      digitDifficulty,
+      soundEnabled,
+      userAnswers,
+      userProcedures,
+      levelProgressData
+    };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+  } catch (e) {
+    console.warn("Storage write error:", e);
+  }
+}
+
+function loadStateFromLocalStorage() {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (!saved) return;
+    const data = JSON.parse(saved);
+    if (data.studentName) {
+      studentName = data.studentName;
+      const el = document.getElementById('student-name');
+      if (el) el.value = studentName;
+    }
+    if (typeof data.totalStars === 'number') totalStars = data.totalStars;
+    if (typeof data.digitDifficulty === 'number') digitDifficulty = data.digitDifficulty;
+    if (typeof data.soundEnabled === 'boolean') soundEnabled = data.soundEnabled;
+    if (data.userAnswers) userAnswers = data.userAnswers;
+    if (data.userProcedures) userProcedures = data.userProcedures;
+    if (data.levelProgressData) levelProgressData = data.levelProgressData;
+
+    document.getElementById('total-stars').innerText = totalStars;
+  } catch (e) {
+    console.warn("Storage load error:", e);
+  }
+}
+
+function onStudentNameChange(val) {
+  studentName = val.trim() || "Campeón(a)";
+  saveStateToLocalStorage();
+}
 
 // Audio Synthesizer
 let audioCtx = null;
@@ -155,6 +206,7 @@ function playStarSound(starIndex) {
 // INITIALIZATION
 // ----------------------------------------------------
 document.addEventListener('DOMContentLoaded', () => {
+  loadStateFromLocalStorage();
   renderCategoryTabs();
   renderLevelTabs();
   loadLevel(1);
@@ -182,13 +234,17 @@ function renderCategoryTabs() {
 function renderLevelTabs() {
   const container = document.getElementById('levels-container');
   const catData = CATEGORY_DATA[currentCategory];
-  container.innerHTML = catData.levels.map(lvl => `
-    <button class="level-tab-btn ${lvl.id === currentLevel ? 'active' : ''}" id="tab-lvl-${lvl.id}" onclick="loadLevel(${lvl.id})">
-      <span style="font-size: 1.2rem;">${lvl.icon}</span>
-      <span class="level-tab-title">${lvl.table ? 'Tabla ' + lvl.table : lvl.name.split(' ')[0]}</span>
-      <span class="level-tab-sub">Nivel ${lvl.id}</span>
-    </button>
-  `).join('');
+  container.innerHTML = catData.levels.map(lvl => {
+    const progress = levelProgressData[`${currentCategory}-${lvl.id}`];
+    const starStr = progress && progress.stars > 0 ? ' ⭐'.repeat(progress.stars) : '';
+    return `
+      <button class="level-tab-btn ${lvl.id === currentLevel ? 'active' : ''}" id="tab-lvl-${lvl.id}" onclick="loadLevel(${lvl.id})">
+        <span style="font-size: 1.2rem;">${lvl.icon}</span>
+        <span class="level-tab-title">${lvl.table ? 'Tabla ' + lvl.table : lvl.name.split(' ')[0]}</span>
+        <span class="level-tab-sub">Nivel ${lvl.id}${starStr}</span>
+      </button>
+    `;
+  }).join('');
 }
 
 function setGlobalInputMode(mode) {
@@ -212,7 +268,6 @@ function loadLevel(levelId) {
   updateLevelProgress();
 }
 
-// Question generator
 function getQuestionsForCurrent() {
   const questions = [];
 
@@ -335,12 +390,14 @@ function onNumChange(key, val) {
   if (!userAnswers[key]) userAnswers[key] = { num: '', text: '', drawing: null, correct: null };
   userAnswers[key].num = val;
   updateLevelProgress();
+  saveStateToLocalStorage();
 }
 
 function onTextChange(key, val) {
   if (!userAnswers[key]) userAnswers[key] = { num: '', text: '', drawing: null, correct: null };
   userAnswers[key].text = val;
   updateLevelProgress();
+  saveStateToLocalStorage();
 }
 
 function updateLevelProgress() {
@@ -400,12 +457,27 @@ function checkCurrentLevel() {
   else if (correctCount >= 7) earnedStars = 2;
   else if (correctCount >= 1) earnedStars = 1;
 
-  totalStars += earnedStars;
+  // Track progress in levelProgressData
+  const lvlKey = `${currentCategory}-${currentLevel}`;
+  const prevData = levelProgressData[lvlKey] || { bestScore: 0, stars: 0, completed: false, attempts: 0 };
+  
+  const starsDiff = Math.max(0, earnedStars - prevData.stars);
+  totalStars += starsDiff;
   document.getElementById('total-stars').innerText = totalStars;
+
+  levelProgressData[lvlKey] = {
+    bestScore: Math.max(prevData.bestScore, correctCount),
+    stars: Math.max(prevData.stars, earnedStars),
+    completed: correctCount >= 7,
+    attempts: prevData.attempts + 1
+  };
+
+  saveStateToLocalStorage();
+  renderLevelTabs();
 
   const catData = CATEGORY_DATA[currentCategory];
   const levelInfo = catData.levels.find(l => l.id === currentLevel) || catData.levels[0];
-  const student = document.getElementById('student-name').value || "Campeón(a)";
+  const student = studentName;
 
   lastScoreStats = {
     correct: correctCount,
@@ -420,11 +492,10 @@ function checkCurrentLevel() {
 
 function openScoreModal(correctCount, earnedStars) {
   const modal = document.getElementById('victory-modal');
-  const student = document.getElementById('student-name').value || "Campeón(a)";
   const catData = CATEGORY_DATA[currentCategory];
   const levelInfo = catData.levels.find(l => l.id === currentLevel) || catData.levels[0];
 
-  document.getElementById('victory-title').innerText = `¡Resultado de ${student}!`;
+  document.getElementById('victory-title').innerText = `¡Resultado de ${studentName}!`;
   document.getElementById('animated-score-val').innerText = '0';
   document.getElementById('animated-pct').innerText = '0%';
   document.getElementById('victory-msg').innerText = 'Evaluando respuestas...';
@@ -540,7 +611,7 @@ function nextLevelFromVictory() {
 
 function showFinalMasterCelebration() {
   const modal = document.getElementById('victory-modal');
-  const student = document.getElementById('student-name').value || "Campeón(a)";
+  const student = studentName;
   const catName = CATEGORY_DATA[currentCategory].name;
   
   document.getElementById('score-emoji').innerText = '👑';
@@ -581,9 +652,153 @@ function resetCurrentLevel() {
     const key = `${currentCategory}-${currentLevel}-${idx}`;
     delete userAnswers[key];
   });
+  saveStateToLocalStorage();
   renderExercises();
   updateLevelProgress();
   playTone(330, 'sine', 0.15);
+}
+
+// ----------------------------------------------------
+// 📊 DASHBOARD DE AVANCES & ESTADÍSTICAS
+// ----------------------------------------------------
+let activeDashCategory = 'multiplication';
+
+function openDashboardModal() {
+  document.getElementById('dash-student-title').innerText = `Progreso de ${studentName}`;
+  document.getElementById('dash-total-stars').innerText = totalStars;
+
+  // Calculate total levels and completed levels across all categories
+  let totalPossibleLevels = 0;
+  let completedCount = 0;
+  let totalScoreSum = 0;
+  let maxPossibleScore = 0;
+
+  Object.keys(CATEGORY_DATA).forEach(catKey => {
+    const levels = CATEGORY_DATA[catKey].levels;
+    totalPossibleLevels += levels.length;
+    levels.forEach(lvl => {
+      maxPossibleScore += 10;
+      const prog = levelProgressData[`${catKey}-${lvl.id}`];
+      if (prog) {
+        if (prog.completed || prog.stars >= 2) completedCount++;
+        totalScoreSum += (prog.bestScore || 0);
+      }
+    });
+  });
+
+  const masteryPct = Math.min(100, Math.round((totalScoreSum / (maxPossibleScore || 1)) * 100));
+  document.getElementById('dash-levels-completed').innerText = `${completedCount} / ${totalPossibleLevels}`;
+  document.getElementById('dash-overall-mastery').innerText = `${masteryPct}%`;
+
+  renderDashboardTab(activeDashCategory);
+  renderDashboardAchievements();
+
+  document.getElementById('dashboard-modal').classList.add('active');
+}
+
+function closeDashboardModal() {
+  document.getElementById('dashboard-modal').classList.remove('active');
+}
+
+function renderDashboardTab(catKey) {
+  activeDashCategory = catKey;
+  ['mul', 'add', 'sub', 'div'].forEach(k => {
+    const map = { mul: 'multiplication', add: 'addition', sub: 'subtraction', div: 'division' };
+    const btn = document.getElementById(`dash-tab-${k}`);
+    if (btn) btn.classList.toggle('active', catKey === map[k]);
+  });
+
+  const container = document.getElementById('dash-discipline-content');
+  const catData = CATEGORY_DATA[catKey];
+
+  container.innerHTML = catData.levels.map(lvl => {
+    const prog = levelProgressData[`${catKey}-${lvl.id}`] || { bestScore: 0, stars: 0, completed: false, attempts: 0 };
+    const isMastered = prog.stars === 3;
+    const isProgress = prog.attempts > 0 && prog.stars < 3;
+
+    let badgeClass = 'status-not-started';
+    let badgeText = 'No Iniciado';
+    if (isMastered || prog.completed) {
+      badgeClass = 'status-completed';
+      badgeText = 'Dominado';
+    } else if (isProgress) {
+      badgeClass = 'status-progress';
+      badgeText = 'En Práctica';
+    }
+
+    let starsDisplay = '';
+    for (let s = 1; s <= 3; s++) {
+      starsDisplay += s <= prog.stars ? '⭐' : '☆';
+    }
+
+    return `
+      <div class="dash-level-card ${isMastered ? 'mastered' : ''}">
+        <div class="dash-card-header">
+          <span class="dash-card-title">${lvl.icon} ${lvl.name}</span>
+          <span class="dash-status-badge ${badgeClass}">${badgeText}</span>
+        </div>
+        <div class="dash-stars">${starsDisplay}</div>
+        <div class="dash-score-text">
+          Mejor puntaje: <strong>${prog.bestScore} / 10</strong> (${prog.attempts} intento${prog.attempts === 1 ? '' : 's'})
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function renderDashboardAchievements() {
+  const container = document.getElementById('dash-achievements-list');
+  if (!container) return;
+
+  // Check achievement criteria
+  let totalLevelsCompleted = 0;
+  let perfectCount = 0;
+  let mult10Count = 0;
+  let divCompleted = 0;
+
+  Object.keys(CATEGORY_DATA).forEach(catKey => {
+    CATEGORY_DATA[catKey].levels.forEach(lvl => {
+      const prog = levelProgressData[`${catKey}-${lvl.id}`];
+      if (prog) {
+        if (prog.stars >= 2) totalLevelsCompleted++;
+        if (prog.bestScore === 10) perfectCount++;
+        if (catKey === 'multiplication' && lvl.id <= 10 && prog.stars >= 2) mult10Count++;
+        if (catKey === 'division' && prog.stars >= 2) divCompleted++;
+      }
+    });
+  });
+
+  const achievements = [
+    { icon: "🌟", title: "Primer Paso", desc: "Completar al menos 1 nivel con estrellas.", unlocked: totalLevelsCompleted >= 1 },
+    { icon: "🥇", title: "Puntaje Perfecto", desc: "Obtener 10 de 10 en cualquier tabla u operación.", unlocked: perfectCount >= 1 },
+    { icon: "👑", title: "Rey de las Tablas", desc: "Aprobar las 10 tablas de multiplicar.", unlocked: mult10Count >= 10 },
+    { icon: "➗", title: "Maestro de la Casita", desc: "Completar 3 o más niveles de división.", unlocked: divCompleted >= 3 },
+    { icon: "🚀", title: "Coleccionista Cósmico", desc: "Acumular 20 o más estrellas doradas.", unlocked: totalStars >= 20 }
+  ];
+
+  container.innerHTML = achievements.map(ach => `
+    <div class="achievement-item ${ach.unlocked ? 'unlocked' : ''}">
+      <span class="ach-icon">${ach.icon}</span>
+      <div class="ach-info">
+        <strong class="ach-title">${ach.title}</strong>
+        <span class="ach-desc">${ach.desc}</span>
+      </div>
+    </div>
+  `).join('');
+}
+
+function confirmResetAllProgress() {
+  if (confirm("¿Estás seguro de que deseas reiniciar todo el progreso y las estrellas de " + studentName + "?")) {
+    localStorage.removeItem(STORAGE_KEY);
+    totalStars = 0;
+    userAnswers = {};
+    userProcedures = {};
+    levelProgressData = {};
+    document.getElementById('total-stars').innerText = 0;
+    closeDashboardModal();
+    loadLevel(1);
+    showToast("Progreso reiniciado correctamente 🔄");
+  }
 }
 
 // ----------------------------------------------------
@@ -620,7 +835,6 @@ function copyShareLink() {
   });
 }
 
-// Generate Duolingo-style High-Resolution Graphic Card (1080x1080)
 function generateAndDownloadCard() {
   const cardCanvas = document.getElementById('card-generator-canvas');
   if (!cardCanvas) return;
@@ -628,7 +842,6 @@ function generateAndDownloadCard() {
   const w = 1080;
   const h = 1080;
 
-  // 1. Vibrant Gradient Background
   const grad = c.createLinearGradient(0, 0, w, h);
   grad.addColorStop(0, '#312e81');
   grad.addColorStop(0.5, '#4f46e5');
@@ -636,13 +849,11 @@ function generateAndDownloadCard() {
   c.fillStyle = grad;
   c.fillRect(0, 0, w, h);
 
-  // Decorative circles
   c.fillStyle = 'rgba(255, 255, 255, 0.05)';
   c.beginPath(); c.arc(100, 100, 220, 0, Math.PI * 2); c.fill();
   c.beginPath(); c.arc(980, 900, 280, 0, Math.PI * 2); c.fill();
   c.beginPath(); c.arc(950, 150, 140, 0, Math.PI * 2); c.fill();
 
-  // 2. White Card Container
   c.shadowColor = 'rgba(0, 0, 0, 0.4)';
   c.shadowBlur = 50;
   c.shadowOffsetY = 25;
@@ -650,7 +861,6 @@ function generateAndDownloadCard() {
   roundRect(c, 70, 70, w - 140, h - 140, 50, true, false);
   c.shadowColor = 'transparent';
 
-  // 3. Top Banner Badge
   c.fillStyle = '#fef08a';
   roundRect(c, 320, 120, 440, 65, 30, true, false);
   c.fillStyle = '#854d0e';
@@ -658,21 +868,17 @@ function generateAndDownloadCard() {
   c.textAlign = 'center';
   c.fillText('🚀 TABLAS MÁGICAS • 4º GRADO', w / 2, 163);
 
-  // 4. Big Trophy / Achievement Emoji
   c.font = '140px sans-serif';
   c.fillText(lastScoreStats.stars === 3 ? '🏆' : (lastScoreStats.stars >= 2 ? '🎉' : '⭐'), w / 2, 330);
 
-  // 5. Main Title
   c.fillStyle = '#1e1b4b';
   c.font = '900 58px Fredoka, Nunito, sans-serif';
   c.fillText('¡LOGRO DESBLOQUEADO!', w / 2, 420);
 
-  // 6. Student Name
   c.fillStyle = '#4f46e5';
   c.font = '800 50px Nunito, sans-serif';
   c.fillText(`¡Felicidades, ${lastScoreStats.student}!`, w / 2, 490);
 
-  // 7. Level & Score Box
   c.fillStyle = '#f8fafc';
   c.strokeStyle = '#e2e8f0';
   c.lineWidth = 4;
@@ -686,7 +892,6 @@ function generateAndDownloadCard() {
   c.font = '900 64px Fredoka, sans-serif';
   c.fillText(`${lastScoreStats.correct} / 10 Aciertos (${lastScoreStats.correct * 10}%)`, w / 2, 670);
 
-  // Stars
   const starsCount = Math.max(lastScoreStats.stars, 1);
   let starsStr = '';
   for (let i = 0; i < 3; i++) {
@@ -695,7 +900,6 @@ function generateAndDownloadCard() {
   c.font = '65px sans-serif';
   c.fillText(starsStr.trim(), w / 2, 745);
 
-  // 8. Footer Call to Action & Link
   c.fillStyle = '#475569';
   c.font = 'bold 30px Nunito, sans-serif';
   c.fillText('Practica matemáticas y supera tus retos gratis en:', w / 2, 860);
@@ -704,12 +908,9 @@ function generateAndDownloadCard() {
   c.font = '900 38px Nunito, sans-serif';
   c.fillText('werkweek.github.io/tablas-magicas/', w / 2, 920);
 
-  // 9. Download the Image
   cardCanvas.toBlob(blob => {
     if (!blob) return;
     const file = new File([blob], `Logro_Tablas_Magicas_${lastScoreStats.student}.png`, { type: 'image/png' });
-
-    // If mobile supports Web Share with files
     if (navigator.canShare && navigator.canShare({ files: [file] })) {
       navigator.share({
         files: [file],
@@ -764,10 +965,12 @@ function closeSettingsModal() {
 
 function setDigitDifficulty(diff) {
   digitDifficulty = parseInt(diff);
+  saveStateToLocalStorage();
 }
 
 function toggleSound(enabled) {
   soundEnabled = enabled;
+  saveStateToLocalStorage();
 }
 
 // ----------------------------------------------------
@@ -865,6 +1068,7 @@ function saveDrawingToExercise() {
     userAnswers[activeDrawingKey] = { num: '', text: '', drawing: null, correct: null };
   }
   userAnswers[activeDrawingKey].drawing = dataURL;
+  saveStateToLocalStorage();
   closeDrawModal();
   renderExercises();
   updateLevelProgress();
@@ -960,6 +1164,7 @@ function undoProcCanvas() {
 function saveProcedureToExercise() {
   if (!activeProcedureKey) return;
   userProcedures[activeProcedureKey] = procCanvas.toDataURL('image/png');
+  saveStateToLocalStorage();
   closeProcedureModal();
   renderExercises();
   playTone(880, 'sine', 0.1);
